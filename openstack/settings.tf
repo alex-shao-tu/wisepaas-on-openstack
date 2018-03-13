@@ -40,6 +40,12 @@ variable "openstack_region_name" {
   default = "RegionOne"
 }
 
+# The name of the pool from which to obtain the floating IP.
+# Normally not necessary to modify this.
+variable "openstack_floatingip_pool_name" {
+  default = "public"
+}
+
 # The private key name to be used in OpenStack for OCF environment.
 # Normally not necessary to modify this.
 variable "private_key_os_name" {
