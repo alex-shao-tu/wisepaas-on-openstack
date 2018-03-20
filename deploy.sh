@@ -49,6 +49,11 @@ BOSH_LOGIN
 
 # remote actions on starter
 ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << EOF
+# get bosh-deployment
+git clone \
+    https://github.com/cloudfoundry/bosh-deployment.git \
+    /opt/spacex/workspaces
+
 # create BOSH director
 bosh -n --tty create-env /opt/spacex/workspaces/bosh-deployment/bosh.yml \
     --state=/opt/spacex/state.json \
@@ -79,7 +84,23 @@ bosh -n --tty -e ${INTERNAL_IP} alias-env spacex \
 /opt/spacex/bosh-login.sh
 EOF
 
-# upload BOSH releases, stemcells
+# upload manifests, releases, and stemcells from local to starter
+ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << EOF
+chmod 0777 /opt/spacex
+EOF
+(
+    cd spaces
+    for name in *; do
+        scp -i bosh.pem -r ${name} ubuntu@${STARTER_IP}:/opt/spacex
+    done
+)
+ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << EOF
+chmod 0755 /opt/spacex
+cd /opt/spacex
+chown -R root:root *
+EOF
+
+# upload BOSH releases, stemcells, from starter to BOSH director
 ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << 'EOF'
 for tgz in /opt/spacex/releases/*.tgz; do
     bosh -n --tty -e spacex upload-release ${tgz}
