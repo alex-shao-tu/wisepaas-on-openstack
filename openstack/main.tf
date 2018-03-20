@@ -14,10 +14,15 @@ provider "openstack" {
   region = "${var.openstack_region_name}"
 }
 
+# use this data source to get the ID of WISE-PaaS-vnet
+data "openstack_networking_network_v2" "wisepaas_vnet" {
+  name = "${var.wisepaas_vnet_name}"
+}
+
 # upload keypair
 resource "openstack_compute_keypair_v2" "bosh" {
   name = "${var.private_key_os_name}"
-  public_key = "${replace("${file("bosh.pub")}", "\n", "")}"
+  public_key = "${replace("${file("../bosh.pub")}", "\n", "")}"
 }
 
 # upload starter image
@@ -51,11 +56,44 @@ resource "openstack_compute_instance_v2" "starter" {
 
   depends_on = [
     "openstack_compute_keypair_v2.bosh",
-    "openstack_images_image_v2.starter"
+    "openstack_images_image_v2.starter",
+    "openstack_networking_floatingip_v2.starter"
   ]
 
+  # create site.rc
   provisioner "local-exec" {
     command = <<EOF
+      echo "#" > ../site.rc
+      echo "# environments of beening deployed site" >> ../site.rc
+      echo "#" >> ../site.rc
+      echo export STARTER_IP=${openstack_compute_instance_v2.starter.floating_ip} >> ../site.rc
+      echo export DIRECTOR_NAME=${var.director_name} >> ../site.rc
+      echo export INTERNAL_CIDR=${var.internal_cidr} >> ../site.rc
+      echo export INTERNAL_GW=${var.internal_gw} >> ../site.rc
+      echo export INTERNAL_IP=${var.internal_ip} >> ../site.rc
+      echo export AUTH_URL=${var.openstack_auth_url} >> ../site.rc
+      echo export AZ=${var.az} >> ../site.rc
+      echo export DEFAULT_KEY_NAME=${var.private_key_os_name} >> ../site.rc
+      echo export DEFAULT_SECURITY_GROUPS=[${var.wisepaas_nsg_name}] >> ../site.rc
+      echo export NET_ID=${data.openstack_networking_network_v2.wisepaas_vnet.id} >> ../site.rc
+      echo export OS_USERNAME=${var.openstack_user_name} >> ../site.rc
+      echo export OS_PASSWORD=${var.openstack_password} >> ../site.rc
+      echo export OS_DOMAIN=${var.openstack_domain_name} >> ../site.rc
+      echo export OS_PROJECT=${var.openstack_tenant_name} >> ../site.rc
+      echo export OS_REGION=${var.openstack_region_name} >> ../site.rc
+      chmod 0644 ../site.rc
+    EOF
+  }
+
+  # create go-starter.sh for convenient
+  provisioner "local-exec" {
+    command = <<EOF
+      echo "#!/bin/bash -eu" > ../go-starter.sh
+      echo "" >> ../go-starter.sh
+      echo "" >> ../go-starter.sh
+      echo "ssh -i bosh.pem ubuntu@${openstack_compute_instance_v2.starter.floating_ip}" >> ../go-starter.sh
+      echo "" >> ../go-starter.sh
+      chmod 0755 ../go-starter.sh
     EOF
   }
 }
