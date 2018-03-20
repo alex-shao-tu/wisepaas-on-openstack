@@ -88,6 +88,8 @@ done
 for tgz in /opt/spacex/stemcells/*.tgz; do
     bosh --tty -e spacex upload-stemcell ${tgz}
 done
+
+unset tgz
 EOF
 
 # all done, go to start from now on
