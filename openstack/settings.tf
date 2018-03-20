@@ -76,3 +76,32 @@ variable "wisepaas_vnet_name" {
   default = "WISE-PaaS-vnet"
 }
 
+# The name of BOSH director to be used when running "bosh create-env".
+# Normally not necessary to modify this.
+variable "director_name" {
+  default = "p-bosh"
+}
+
+# The internal CIDR to be used when running "bosh create-env".
+# Normally not necessary to modify this.
+variable "internal_cidr" {
+  default = "10.0.0.0/16"
+}
+
+# The internal gateway to be used when running "bosh create-env".
+# Normally not necessary to modify this.
+variable "internal_gw" {
+  default = "10.0.0.1"
+}
+
+# The internal IP of BOSH director. Used when running "bosh create-env".
+# Normally not necessary to modify this.
+variable "internal_ip" {
+  default = "10.0.0.100"
+}
+
+# The AZ to be used when running "bosh create-env".
+# Normally not necessary to modify this.
+variable "az" {
+  default = "nova"
+}
