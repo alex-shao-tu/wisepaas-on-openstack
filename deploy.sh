@@ -36,7 +36,7 @@ cat << '__SCRIPT__' > /opt/spacex/bosh-login.sh
 cd /opt/spacex
 export BOSH_ADMIN_PASSWORD="$(bosh int creds.yml --path /admin_password)"
 
-bosh -e spacex login << EOF
+bosh -n -e spacex login << EOF
 admin
 ${BOSH_ADMIN_PASSWORD}
 EOF
@@ -50,7 +50,7 @@ BOSH_LOGIN
 # remote actions on starter
 ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << EOF
 # create BOSH director
-bosh --tty create-env /opt/spacex/workspaces/bosh-deployment/bosh.yml \
+bosh -n --tty create-env /opt/spacex/workspaces/bosh-deployment/bosh.yml \
     --state=/opt/spacex/state.json \
     --vars-store=/opt/spacex/creds.yml \
     -o /opt/spacex/workspaces/bosh-deployment/openstack/cpi.yml \
@@ -72,7 +72,7 @@ bosh --tty create-env /opt/spacex/workspaces/bosh-deployment/bosh.yml \
     -v private_key=${DEFAULT_KEY_NAME}.pem
 
 # alias created BOSH director
-bosh --tty -e ${INTERNAL_IP} alias-env spacex \
+bosh -n --tty -e ${INTERNAL_IP} alias-env spacex \
     --ca-cert <(bosh int /opt/spacex/creds.yml --path /director_ssl/ca)
 
 # log into BOSH
@@ -82,11 +82,11 @@ EOF
 # upload BOSH releases, stemcells
 ssh -i bosh.pem ubuntu@${STARTER_IP} "sudo bash -eus" -- << 'EOF'
 for tgz in /opt/spacex/releases/*.tgz; do
-    bosh --tty -e spacex upload-release ${tgz}
+    bosh -n --tty -e spacex upload-release ${tgz}
 done
 
 for tgz in /opt/spacex/stemcells/*.tgz; do
-    bosh --tty -e spacex upload-stemcell ${tgz}
+    bosh -n --tty -e spacex upload-stemcell ${tgz}
 done
 
 unset tgz
